@@ -6,43 +6,26 @@ import numpy as np
 import lab1_library
 
 
-# Declaring namedtuple()
-# n - total length of the simulation (number of samples/iterations)
-# h_depth - number of history elements in \phi and corresponding coefficients (length of vectors)
-# n_bits - number of bits to be transmitted (resolution of encoded error value)
-# phi   - vector of vectors of samples history (reproduced!!)
-#       - first index = iteration; second index = current time vector element
-# theta - vector of vectors of coefficients 
-#       - first index = iteration; second index = current time vector element
-# y_hat - vector of all predicted (from = theta * phi + k_v * eq)
-# e - exact error between the sample and the predicted value (y_hat)
-# eq - quantized value of error (see n_bits!!)
-# y_recreated - vector of all recreated/regenerated samples (used in the prediction!!)
-# NDPCM = namedtuple(
-#     'NDPCM',
-#     ['n', 'h_depth', 'n_bits', 'phi', 'theta', 'y_hat', 'e', 'eq', 'y_recreated']
-# )
-
 @dataclass
 class NADPCMC:
     """
     Data block for NADPCMC algorithm
 
     Attributes:
-        n: int                  - total length of the simulation (number of samples/iterations)
-        h_depth: int            - number of history elements in \phi and corresponding coefficients (length of vectors)
-        n_bits: int             - number of bits to be transmitted (resolution of encoded error value)
-        phi: np.ndarray         - vector of vectors of samples history (reproduced!!)
-                                - first index = iteration; second index = current time vector element
-        theta: np.ndarray       - vector of vectors of coefficients
-                                - first index = iteration; second index = current time vector element
-        y_hat: np.ndarray       - vector of all predicted (from = theta * phi + k_v * eq)
-        e: np.ndarray           - exact error between the sample and the predicted value (y_hat)
-        eq: np.ndarray          - quantized value of error (see n_bits!!)
-        y_recreated: np.ndarray - vector of all recreated/regenerated samples (used in the prediction!!)
+        # n (int): total length of the simulation (number of samples/iterations)
+        h_depth (int): number of history elements in \phi and corresponding coefficients (length of vectors)
+        n_bits (int): number of bits to be transmitted (resolution of encoded error value)
+        phi (np.ndarray): vector of vectors of samples history (reproduced!!)
+                          first index = iteration; second index = current time vector element
+        theta (np.ndarray): vector of vectors of coefficients
+                            first index = iteration; second index = current time vector element
+        y_hat (np.ndarray): vector of all predicted (from = theta * phi + k_v * eq)
+        e (np.ndarray): exact error between the sample and the predicted value (y_hat)
+        eq (np.ndarray): quantized value of error (see n_bits!!)
+        y_recreated (np.ndarray): vector of all recreated/regenerated samples (used in the prediction!!)
 
     """
-    n: int
+    # n: int
     h_depth: int
     n_bits: int
     phi: np.ndarray
@@ -53,32 +36,44 @@ class NADPCMC:
     y_recreated: np.ndarray
 
 
-# Define the hyb param of the NDPCM
 @dataclass
 class HybParam:
     """
     Hybrid parameters for NADPCMC algorithm
 
     Attributes:
-        alpha: int  - adaptation gain, or called it learning rate :)
-        k_v: int    - step size for error correction
+        alpha (int): adaptation gain / learning rate
+        k_v (int): step size for error correction
+
     """
-    alpha: float = 0.01
-    k_v: float = 0.01
+    alpha: float
+    k_v: float
 
 
-def init(n, h_depth, n_bits):
-    # Adding values
-    # data_block = NDPCM(
-    #     n, h_depth, n_bits, np.zeros((n, h_depth)), np.zeros(
-    #         (n, h_depth)
-    #     ), np.zeros(n), np.zeros(n), np.zeros(n), np.zeros(n)
-    # )
-    # Modify initial value for any component, parameter:
-    # ...
+# Global parameters. if alpha is too high, it will diverge (thetas will be NaN or Inf)
+hyb_param = HybParam(alpha=1e-9, k_v=1e-1)
 
+
+def _enqueue(queue: np.ndarray, value) -> np.ndarray:
+    """
+    Enqueue value to the queue in the first position
+
+    Args:
+        queue (np.ndarray): queue to be updated
+        value (any): value to be enqueued
+
+    Returns:
+        np.ndarray: updated queue
+
+    """
+    q = np.roll(queue, 1)  # Shift all elements to the right
+    q[0] = value
+    return q
+
+
+def init(n: int, h_depth: int, n_bits: int) -> NADPCMC:
+    n += 1  # for including the initial values of phi and theta in index 0
     data_block = NADPCMC(
-        n=n,
         h_depth=h_depth,
         n_bits=n_bits,
         phi=np.zeros((n, h_depth)),
@@ -88,58 +83,61 @@ def init(n, h_depth, n_bits):
         eq=np.zeros(n),
         y_recreated=np.zeros(n)
     )
-    # Initialize
-    data_block.phi[0] = np.zeros(h_depth)
-    data_block.theta[0] = np.zeros(h_depth)
+    # data_block.theta[0] = np.random.rand(h_depth)
     return data_block
 
 
-def prepare_params_for_prediction(data_bloc, k):
-    # Update weights for next round (k) based on previous k-1, k-2,...
-    # TODO: for first iteration INITIALIZE 'phi' and 'theta'
-    if k <= data_bloc.h_depth:
-        data_bloc.phi[k] = np.array(
-            [data_bloc.y_recreated[k],  # Add last recreated value (y(k-1)
-             data_bloc.y_recreated[k - 1],  # Copy shifted from previous history (y(k-2))
-             data_bloc.y_recreated[k - 2]]
-        )
-        data_bloc.theta[k] = np.array(
-            [0.1, 0.1, 0.1]
-        )
-        return
-    # TODO: Fill 'phi' history for 'h_depth' last elements (k-1, k-2,...)
-    data_bloc.phi[k] = np.array(
-        [data_bloc.y_recreated[k],  # Add last recreated value (y(k-1)
-         data_bloc.y_recreated[k - 1],  # Copy shifted from previous history (y(k-2))
-         data_bloc.y_recreated[k - 2]]
+def init_params(data_block: NADPCMC, y: float):
+    """
+    Initialize phi, y_hat, y_recreated with the first value of the signal
+
+    Args:
+        data_block (NADPCMC): data block with all necessary data
+        y (float): first value of the signal
+
+    """
+    phi = data_block.phi[0]
+    data_block.phi[0] = _enqueue(phi, y)
+    # data_block.phi[0] = _enqueue(phi, np.sin(y))
+    data_block.y_recreated[0], data_block.y_hat[0] = y, y
+
+
+def update_params(data_block: NADPCMC, k: int):
+    """
+    Update weights for next round (k) based on previous k-1, k-2,...
+
+    Args:
+        data_block (NADPCMC): data block with all necessary data
+        k (int): current iteration
+
+    """
+    data_block.theta[k + 1] = (
+            data_block.theta[k] + hyb_param.alpha * data_block.phi[k] * data_block.eq[k + 1]
+    )  # TODO: `e` or `eq`. in the original paper `e^T`, how a scalar can be transposed?
+
+
+def predict(data_block: NADPCMC, k: int) -> float:
+    data_block.y_hat[k + 1] = (
+            data_block.theta[k] @ data_block.phi[k] - hyb_param.k_v * data_block.eq[k]
+    )  # TODO: `e` or `eq`. In ori paper `e` is used but in ppt `eq`
+    return data_block.y_hat[k + 1]
+
+
+def calculate_error(data_block: NADPCMC, k: int, real_y: float) -> float:
+    data_block.e[k + 1] = real_y - data_block.y_hat[k + 1]
+    data_block.eq[k + 1] = lab1_library.quantize(
+        data_block.e[k + 1], data_block.n_bits
     )
-    print("e=", data_bloc.eq[k])
-    print("eT=", data_bloc.eq[k].transpose())
-    # TODO: Update weights/coefficients 'theta'
-
-    return
-
-
-def predict(data_bloc, k):
-    if k > 0:
-        data_bloc.phi[k] = data_bloc.phi[k - 1]
-    # TODO: calculate 'hat y(k)' based on (k-1) parameters
-    # data_block.y_hat[k] = ...
-    # if (k==1):
-    # data_block.y_hat[k] = ...
-    print(data_bloc.theta[k] @ data_bloc.phi[k])
-    # TODO: Return prediction - fix:
-    # return data_bloc.y_recreated[k-1];
-    return data_bloc.phi[k][0]
-
-
-def calculate_error(data_block, k, real_y):
-    data_block.e[k] = real_y - data_block.y_hat[k]
-    data_block.eq[k] = lab1_library.quantize(
-        data_block.e[k], data_block.n_bits
-    )
-    return data_block.eq[k]
+    # phi_k = data_block.phi[k]
+    # data_block.phi[k + 1] = _enqueue(phi_k, real_y)
+    # data_block.phi[k + 1] = _enqueue(phi_k, real_y)
+    return data_block.eq[k + 1]
 
 
 def reconstruct(data_block, k):
-    data_block.y_recreated[k] = data_block.y_hat[k] + data_block.eq[k]
+    data_block.y_recreated[k + 1] = data_block.y_hat[k + 1] + data_block.eq[k + 1]
+    phi_k = data_block.phi[k]
+    data_block.phi[k + 1] = _enqueue(phi_k, data_block.y_recreated[k])
+    # data_block.phi[k + 1] = np.sin(data_block.y_recreated[k])
+    # temp = data_block.y_recreated[k+1]
+    return data_block.y_recreated[k + 1]
