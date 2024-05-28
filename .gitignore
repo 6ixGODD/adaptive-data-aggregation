@@ -290,4 +290,6 @@ pyrightconfig.json
 
 *.png
 *.jpg
-*.xls;xlsx;csv
+*.xls
+*.xlsx
+*.csv
