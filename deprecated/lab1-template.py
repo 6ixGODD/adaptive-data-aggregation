@@ -38,79 +38,79 @@ def run(n_bits: int, n: int, h_depth: int, alpha: float, k_v: float, with_noise:
     avg_errs = []
     plt.rcParams['font.family'] = 'Times New Roman'
     plt.rcParams['font.size'] = 12
-    plt.figure(figsize=(6, 6), dpi=200)
-    plt.title(f"Alpha Comparison")
-    for a in [1e-09, 1e-10, 1e-11, 1e-12]:
-        lab1_ndpcm_library.hyb_param = lab1_ndpcm_library.HybParam(alpha=a, k_v=k_v)
-        _tx_data = lab1_ndpcm_library.init(n, h_depth, n_bits)
-        _rx_data = lab1_ndpcm_library.init(n, h_depth, n_bits)
-        _e = np.zeros(n)
-        for _i in range(h_depth):
-            lab1_ndpcm_library.init_params(_tx_data, f[_i])
-            lab1_ndpcm_library.init_params(_rx_data, f[_i])
-        for _k in range(n):
-            _y_hat = lab1_ndpcm_library.predict(_tx_data, _k)
-            _eq = lab1_ndpcm_library.calculate_error(_tx_data, _k, f[_k + h_depth])
-            lab1_ndpcm_library.update_params(_tx_data, _k)
-            _t_re = lab1_ndpcm_library.reconstruct(_tx_data, _k)
-            _e[_k] = f[_k] - _y_hat
-            _rx_data.eq[_k + 1] = _eq
-            _ = lab1_ndpcm_library.predict(_rx_data, _k)
-            lab1_ndpcm_library.update_params(_rx_data, _k)
-            _r_re = lab1_ndpcm_library.reconstruct(_rx_data, _k)
-        _f = f[h_depth:]
-        _e_all = np.abs(_rx_data.y_recreated[1:] - _f)
-        avg_errs.append(np.average(_e_all))
-        _tt = np.arange(1, n + 1)
-        plt.plot(_tt, _rx_data.y_recreated[:-1] - _f, label=f"alpha={a}", linewidth=.5)
-    plt.xlabel("Iteration")
-    plt.ylabel("Error")
-    plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), frameon=False)
-    plt.grid(True, which='both', linestyle='-', linewidth=0.2, color='grey')
-    plt.savefig(
-        f"figure.n_bits={n_bits}.alpha_comparison.png.iter={n}.h_depth={h_depth}.with_noise={with_noise}.alpha_comparison.png",
-        dpi=300,
-        bbox_inches='tight'
-    )
-    plt.close()
-    # plt.show()
-
-    avg_errs = []
-    plt.figure(figsize=(6, 6), dpi=200)
-    plt.title(f"Kv Comparison")
-    for kv in [1, 5e-1, 2e-1, 1e-1, 1e-2, 1e-3]:
-        lab1_ndpcm_library.hyb_param = lab1_ndpcm_library.HybParam(alpha=alpha, k_v=kv)
-        _tx_data = lab1_ndpcm_library.init(n, h_depth, n_bits)
-        _rx_data = lab1_ndpcm_library.init(n, h_depth, n_bits)
-        _e = np.zeros(n)
-        for _i in range(h_depth):
-            lab1_ndpcm_library.init_params(_tx_data, f[_i])
-            lab1_ndpcm_library.init_params(_rx_data, f[_i])
-        for _k in range(n):
-            _y_hat = lab1_ndpcm_library.predict(_tx_data, _k)
-            _eq = lab1_ndpcm_library.calculate_error(_tx_data, _k, f[_k + h_depth])
-            lab1_ndpcm_library.update_params(_tx_data, _k)
-            _t_re = lab1_ndpcm_library.reconstruct(_tx_data, _k)
-            _e[_k] = f[_k] - _y_hat
-            _rx_data.eq[_k + 1] = _eq
-            _ = lab1_ndpcm_library.predict(_rx_data, _k)
-            lab1_ndpcm_library.update_params(_rx_data, _k)
-            _r_re = lab1_ndpcm_library.reconstruct(_rx_data, _k)
-        _f = f[h_depth:]
-        _e_all = np.abs(_rx_data.y_recreated[1:] - _f)
-        avg_errs.append(np.average(_e_all))
-        _tt = np.arange(1, n + 1)
-        plt.plot(_tt, _rx_data.y_recreated[:-1] - _f, label=f"kv={kv}", linewidth=.5)
-    plt.xlabel("Iteration")
-    plt.ylabel("Error")
-    plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), frameon=False)
-    plt.grid(True, which='both', linestyle='-', linewidth=0.2, color='grey')
-    plt.savefig(
-        f"figure.n_bits={n_bits}.alpha_comparison.png.iter={n}.h_depth={h_depth}.with_noise={with_noise}.kv_comparison.png",
-        dpi=300,
-        bbox_inches='tight'
-    )
-    plt.close()
+    # plt.figure(figsize=(6, 6), dpi=200)
+    # plt.title(f"Alpha Comparison")
+    # for a in [1e-09, 1e-10, 1e-11, 1e-12]:
+    #     lab1_ndpcm_library.hyb_param = lab1_ndpcm_library.HybParam(alpha=a, k_v=k_v)
+    #     _tx_data = lab1_ndpcm_library.init(n, h_depth, n_bits)
+    #     _rx_data = lab1_ndpcm_library.init(n, h_depth, n_bits)
+    #     _e = np.zeros(n)
+    #     for _i in range(h_depth):
+    #         lab1_ndpcm_library.init_params(_tx_data, f[_i])
+    #         lab1_ndpcm_library.init_params(_rx_data, f[_i])
+    #     for _k in range(n):
+    #         _y_hat = lab1_ndpcm_library.predict(_tx_data, _k)
+    #         _eq = lab1_ndpcm_library.calculate_error(_tx_data, _k, f[_k + h_depth])
+    #         lab1_ndpcm_library.update_params(_tx_data, _k)
+    #         _t_re = lab1_ndpcm_library.reconstruct(_tx_data, _k)
+    #         _e[_k] = f[_k] - _y_hat
+    #         _rx_data.eq[_k + 1] = _eq
+    #         _ = lab1_ndpcm_library.predict(_rx_data, _k)
+    #         lab1_ndpcm_library.update_params(_rx_data, _k)
+    #         _r_re = lab1_ndpcm_library.reconstruct(_rx_data, _k)
+    #     _f = f[h_depth:]
+    #     _e_all = np.abs(_rx_data.y_recreated[1:] - _f)
+    #     avg_errs.append(np.average(_e_all))
+    #     _tt = np.arange(1, n + 1)
+    #     plt.plot(_tt, _rx_data.y_recreated[:-1] - _f, label=f"alpha={a}", linewidth=.5)
+    # plt.xlabel("Iteration")
+    # plt.ylabel("Error")
+    # plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), frameon=False)
+    # plt.grid(True, which='both', linestyle='-', linewidth=0.2, color='grey')
+    # plt.savefig(
+    #     f"figure.n_bits={n_bits}.alpha_comparison.png.iter={n}.h_depth={h_depth}.with_noise={with_noise}.alpha_comparison.png",
+    #     dpi=300,
+    #     bbox_inches='tight'
+    # )
+    # plt.close()
+    # # plt.show()
+    #
+    # avg_errs = []
+    # plt.figure(figsize=(6, 6), dpi=200)
+    # plt.title(f"Kv Comparison")
+    # for kv in [1, 5e-1, 2e-1, 1e-1, 1e-2, 1e-3]:
+    #     lab1_ndpcm_library.hyb_param = lab1_ndpcm_library.HybParam(alpha=alpha, k_v=kv)
+    #     _tx_data = lab1_ndpcm_library.init(n, h_depth, n_bits)
+    #     _rx_data = lab1_ndpcm_library.init(n, h_depth, n_bits)
+    #     _e = np.zeros(n)
+    #     for _i in range(h_depth):
+    #         lab1_ndpcm_library.init_params(_tx_data, f[_i])
+    #         lab1_ndpcm_library.init_params(_rx_data, f[_i])
+    #     for _k in range(n):
+    #         _y_hat = lab1_ndpcm_library.predict(_tx_data, _k)
+    #         _eq = lab1_ndpcm_library.calculate_error(_tx_data, _k, f[_k + h_depth])
+    #         lab1_ndpcm_library.update_params(_tx_data, _k)
+    #         _t_re = lab1_ndpcm_library.reconstruct(_tx_data, _k)
+    #         _e[_k] = f[_k] - _y_hat
+    #         _rx_data.eq[_k + 1] = _eq
+    #         _ = lab1_ndpcm_library.predict(_rx_data, _k)
+    #         lab1_ndpcm_library.update_params(_rx_data, _k)
+    #         _r_re = lab1_ndpcm_library.reconstruct(_rx_data, _k)
+    #     _f = f[h_depth:]
+    #     _e_all = np.abs(_rx_data.y_recreated[1:] - _f)
+    #     avg_errs.append(np.average(_e_all))
+    #     _tt = np.arange(1, n + 1)
+    #     plt.plot(_tt, _rx_data.y_recreated[:-1] - _f, label=f"kv={kv}", linewidth=.5)
+    # plt.xlabel("Iteration")
+    # plt.ylabel("Error")
+    # plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), frameon=False)
+    # plt.grid(True, which='both', linestyle='-', linewidth=0.2, color='grey')
+    # plt.savefig(
+    #     f"figure.n_bits={n_bits}.alpha_comparison.png.iter={n}.h_depth={h_depth}.with_noise={with_noise}.kv_comparison.png",
+    #     dpi=300,
+    #     bbox_inches='tight'
+    # )
+    # plt.close()
     # plt.show()
 
     # Initialization
@@ -149,6 +149,7 @@ def run(n_bits: int, n: int, h_depth: int, alpha: float, k_v: float, with_noise:
         # >> Receiver STEP-4: Reconstruct data
         r_re = lab1_ndpcm_library.reconstruct(rx_data, k)
 
+    # print(rx_data.y_hat)
     # Plotting
     # ==============================================================================================================
     f = f[h_depth:]  # remove history
@@ -236,39 +237,51 @@ def run(n_bits: int, n: int, h_depth: int, alpha: float, k_v: float, with_noise:
 if __name__ == '__main__':
     # run(12, 800, 5, 1e-9, 1e-2, with_noise=True)
     # run(12, 800, 3, 1e-9, 1e-2, with_noise=True)
-    run(12, 800, 3, 1e-9, 1e-2, with_noise=True)
+    # run(12, 800, 3, 1e-9, 1e-2, with_noise=True)
+    # time.sleep(1)
+    # run(15, 800, 3, 1e-9, 1e-2, with_noise=True)
+    # time.sleep(1)
+    # run(16, 800, 3, 1e-9, 1e-2, with_noise=True)
+    # time.sleep(1)
+    # run(12, 800, 4, 1e-9, 1e-2, with_noise=True)
+    # time.sleep(1)
+    # run(15, 800, 4, 1e-9, 1e-2, with_noise=True)
+    # time.sleep(1)
+    # run(16, 800, 4, 1e-9, 1e-2, with_noise=True)
+    # time.sleep(1)
+    # run(12, 1200, 3, 1e-9, 1e-2, with_noise=True)
+    # time.sleep(1)
+    # run(15, 1200, 3, 1e-9, 1e-2, with_noise=True)
+    # time.sleep(1)
+    # run(16, 1200, 3, 1e-9, 1e-2, with_noise=True)
     time.sleep(1)
-    run(15, 800, 3, 1e-9, 1e-2, with_noise=True)
-    time.sleep(1)
-    run(16, 800, 3, 1e-9, 1e-2, with_noise=True)
-    time.sleep(1)
-    run(12, 800, 4, 1e-9, 1e-2, with_noise=True)
-    time.sleep(1)
-    run(15, 800, 4, 1e-9, 1e-2, with_noise=True)
-    time.sleep(1)
-    run(16, 800, 4, 1e-9, 1e-2, with_noise=True)
-    time.sleep(1)
-    run(12, 1200, 3, 1e-9, 1e-2, with_noise=True)
-    time.sleep(1)
-    run(15, 1200, 3, 1e-9, 1e-2, with_noise=True)
-    time.sleep(1)
-    run(16, 1200, 3, 1e-9, 1e-2, with_noise=True)
-
-    time.sleep(1)
-    run(12, 800, 3, 1e-9, 1e-2, with_noise=False)
-    time.sleep(1)
-    run(15, 800, 3, 1e-9, 1e-2, with_noise=False)
-    time.sleep(1)
-    run(16, 800, 3, 1e-9, 1e-2, with_noise=False)
-    time.sleep(1)
-    run(12, 800, 4, 1e-9, 1e-2, with_noise=False)
-    time.sleep(1)
-    run(15, 800, 4, 1e-9, 1e-2, with_noise=False)
-    time.sleep(1)
-    run(16, 800, 4, 1e-9, 1e-2, with_noise=False)
-    time.sleep(1)
-    run(12, 1200, 3, 1e-9, 1e-2, with_noise=False)
-    time.sleep(1)
-    run(15, 1200, 3, 1e-9, 1e-2, with_noise=False)
-    time.sleep(1)
-    run(16, 1200, 3, 1e-9, 1e-2, with_noise=False)
+    run(12, 3, 3, 1e-9, 1e-2, with_noise=True)
+    # time.sleep(1)
+    # run(15, 100, 3, 1e-9, 1e-2, with_noise=True)
+    # time.sleep(1)
+    # run(16, 100, 3, 1e-9, 1e-2, with_noise=True)
+    #
+    # # time.sleep(1)
+    # # run(12, 800, 3, 1e-9, 1e-2, with_noise=False)
+    # # time.sleep(1)
+    # # run(15, 800, 3, 1e-9, 1e-2, with_noise=False)
+    # # time.sleep(1)
+    # # run(16, 800, 3, 1e-9, 1e-2, with_noise=False)
+    # # time.sleep(1)
+    # # run(12, 800, 4, 1e-9, 1e-2, with_noise=False)
+    # # time.sleep(1)
+    # # run(15, 800, 4, 1e-9, 1e-2, with_noise=False)
+    # # time.sleep(1)
+    # # run(16, 800, 4, 1e-9, 1e-2, with_noise=False)
+    # # time.sleep(1)
+    # # run(12, 1200, 3, 1e-9, 1e-2, with_noise=False)
+    # # time.sleep(1)
+    # # run(15, 1200, 3, 1e-9, 1e-2, with_noise=False)
+    # # time.sleep(1)
+    # # run(16, 1200, 3, 1e-9, 1e-2, with_noise=False)
+    # time.sleep(1)
+    # run(12, 100, 3, 1e-9, 1e-2, with_noise=False)
+    # time.sleep(1)
+    # run(15, 100, 3, 1e-9, 1e-2, with_noise=False)
+    # time.sleep(1)
+    # run(16, 100, 3, 1e-9, 1e-2, with_noise=False)
