@@ -288,6 +288,5 @@ pyrightconfig.json
 
 # End of https://www.toptal.com/developers/gitignore/api/pycharm,python
 
-*.png
-*.jpg
-*.jpeg
+*.png;*.jpg;*.gif;*.svg;*.ico;*.icns;*.jpeg;*.bmp;*.tiff;*.tif;*.webp
+*.xls;xlsx;csv
