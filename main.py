@@ -140,7 +140,10 @@ def iterate(nadpcmc_tx: NADPCMC, nadpcmc_rx: NADPCMC, y: np.ndarray, save_dir: s
     # Calculate Metrics
     print('=' * 50)
     # Distortion = |(y - y_recreated) / y| * 100%
-    distortion = np.mean(np.abs(nadpcmc_rx.y_recreated[:-1] - y) / y * 100)
+    __err = np.abs(nadpcmc_rx.y_recreated[:-1] - y) / y * 100
+    __err = np.clip(__err, 0, 100)  # clip the error to 100% to avoid overflow
+    distortion = np.mean(__err)
+    # distortion = np.mean(__err / y) * 100
     print(f'Mean Distortion: {distortion} %')
     # Compression Ratio = total bits in y / total bits in eq and some y for initialization
     # assuming original signal is 16-bit float
@@ -283,7 +286,7 @@ if __name__ == '__main__':
         alpha: float = 1e-09
         k_v: float = 1e-02
         with_noise: bool = False
-        save_dir: str = './output'
+        save_dir: str = './output-1'
 
 
     configs = [
@@ -291,8 +294,12 @@ if __name__ == '__main__':
         Config(n_iter=1000, h_depth=3, n_bits=16, alpha=1e-09, k_v=1e-02, with_noise=True),
         Config(n_iter=1000, h_depth=3, n_bits=12, alpha=1e-09, k_v=1e-02, with_noise=False),
         Config(n_iter=1000, h_depth=3, n_bits=12, alpha=1e-09, k_v=1e-02, with_noise=True),
-        Config(n_iter=1000, h_depth=3, n_bits=8, alpha=1e-09, k_v=1e-02, with_noise=True),
-        Config(n_iter=1000, h_depth=3, n_bits=8, alpha=1e-09, k_v=1e-02, with_noise=True),
+        Config(n_iter=1000, h_depth=3, n_bits=14, alpha=1e-10, k_v=1e-02, with_noise=False),
+        Config(n_iter=1000, h_depth=3, n_bits=14, alpha=1e-10, k_v=1e-02, with_noise=True),
+        Config(n_iter=1000, h_depth=3, n_bits=8, alpha=1e-09, k_v=1e-03, with_noise=True),
+        Config(n_iter=1000, h_depth=3, n_bits=8, alpha=1e-09, k_v=1e-03, with_noise=False),
+        Config(n_iter=1000, h_depth=4, n_bits=12, alpha=1e-09, k_v=1e-02, with_noise=False),
+        Config(n_iter=1000, h_depth=5, n_bits=12, alpha=1e-09, k_v=1e-02, with_noise=False),
     ]
 
     for config in configs:
@@ -305,19 +312,19 @@ if __name__ == '__main__':
             config.with_noise,
             save_dir=config.save_dir
         )
-        alphas_comparison(
-            config.n_iter,
-            config.h_depth,
-            config.n_bits,
-            config.k_v,
-            config.with_noise,
-            save_dir=config.save_dir
-        )
-        k_vs_comparison(
-            config.n_iter,
-            config.h_depth,
-            config.n_bits,
-            config.alpha,
-            config.with_noise,
-            save_dir=config.save_dir
-        )
+        # alphas_comparison(
+        #     config.n_iter,
+        #     config.h_depth,
+        #     config.n_bits,
+        #     config.k_v,
+        #     config.with_noise,
+        #     save_dir=config.save_dir
+        # )
+        # k_vs_comparison(
+        #     config.n_iter,
+        #     config.h_depth,
+        #     config.n_bits,
+        #     config.alpha,
+        #     config.with_noise,
+        #     save_dir=config.save_dir
+        # )
